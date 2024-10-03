@@ -12,3 +12,7 @@ struct SetCollections {
 struct ListCollections {
   1: list<i64> longs
 }
+
+struct ListDoubleCollections {
+  1: list<double> doubles
+}

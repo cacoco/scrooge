@@ -1,4 +1,5 @@
-scala_library(
+scala_benchmark_jmh(
+    name = "benchmark",
     sources = ["**/*.scala"],
     compiler_option_sets = ["fatal_warnings"],
     platform = "java8",
@@ -11,9 +12,6 @@ scala_library(
         "scrooge/scrooge-core/src/main/scala",
         "scrooge/scrooge-serializer",
     ],
-    exports = [
-        "3rdparty/jvm/org/openjdk/jmh:jmh-core",
-    ],
 )
 
 jvm_binary(
@@ -21,10 +19,16 @@ jvm_binary(
     main = "org.openjdk.jmh.Main",
     platform = "java8",
     dependencies = [
-        ":scala",
+        ":benchmark_compiled_benchmark_lib",
         scoped(
             "3rdparty/jvm/org/slf4j:slf4j-nop",
             scope = "runtime",
         ),
     ],
+)
+
+jvm_app(
+    name = "jmh-bundle",
+    basename = "scrooge-benchmark-bundle",
+    binary = ":jmh",
 )

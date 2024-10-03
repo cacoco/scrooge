@@ -237,6 +237,25 @@ trait StructTemplate { self: TemplateGenerator =>
   }
 
   @scala.annotation.tailrec
+  private[this] def genWriteListFn(
+    elementFieldType: FieldType,
+    fieldName: CodeFragment,
+    protoName: String
+  ): CodeFragment = {
+    elementFieldType match {
+      case at: AnnotatedFieldType => genWriteListFn(at.unwrap, fieldName, protoName)
+      case TDouble =>
+        v(s"$rootProtos.writeListDouble($protoName, $fieldName, TType.DOUBLE, _root_.com.twitter.scrooge.internal.TProtocols.writeDoubleConsumer)")
+      case TI64 =>
+        v(s"$rootProtos.writeListI64($protoName, $fieldName, TType.I64, _root_.com.twitter.scrooge.internal.TProtocols.writeI64Consumer)")
+      case _ =>
+        val elemFieldType = s"TType.${genConstType(elementFieldType)}"
+        val writeElementFn = genWriteValueFn2(elementFieldType)
+        v(s"$rootProtos.writeList($protoName, $fieldName, $elemFieldType, $writeElementFn)")
+    }
+  }
+
+  @scala.annotation.tailrec
   private[this] def genWriteValueFn2(fieldType: FieldType): CodeFragment = {
     fieldType match {
       case at: AnnotatedFieldType => genWriteValueFn2(at.unwrap)
@@ -306,9 +325,7 @@ trait StructTemplate { self: TemplateGenerator =>
         val writeElement = genWriteValueFn2(t.eltType)
         v(s"$rootProtos.writeSet($protoName, $fieldName, $elemFieldType, $writeElement)")
       case t: ListType =>
-        val elemFieldType = s"TType.${genConstType(t.eltType)}"
-        val writeElement = genWriteValueFn2(t.eltType)
-        v(s"$rootProtos.writeList($protoName, $fieldName, $elemFieldType, $writeElement)")
+        genWriteListFn(t.eltType, fieldName, protoName)
       case t: MapType =>
         val keyType = s"TType.${genConstType(t.keyType)}"
         val valType = s"TType.${genConstType(t.valueType)}"

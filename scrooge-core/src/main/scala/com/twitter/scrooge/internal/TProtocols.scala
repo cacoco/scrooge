@@ -4,9 +4,12 @@ import com.twitter.scrooge.TFieldBlob
 import com.twitter.scrooge.ThriftEnum
 import com.twitter.scrooge.ThriftUnion
 import java.nio.ByteBuffer
+import java.util.function.ObjDoubleConsumer
+import java.util.function.ObjLongConsumer
 import org.apache.thrift.protocol._
 import scala.collection.immutable
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Reads and writes fields for a `TProtocol`. Intended to be used
@@ -93,17 +96,104 @@ final class TProtocols private[TProtocols] {
     elementType: Byte,
     writeElement: (TProtocol, T) => Unit
   ): Unit = {
-    protocol.writeListBegin(new TList(typeForCollection(elementType), list.size))
+    val size = list.size
+    protocol.writeListBegin(new TList(typeForCollection(elementType), size))
     list match {
+      case wrappedArray: mutable.WrappedArray[T] =>
+        val arr = wrappedArray.array
+        var i = 0
+        while (i < size) {
+          val el: T = arr(i).asInstanceOf[T]
+          writeElement(protocol, el)
+          i += 1
+        }
+      case arrayBuffer: ArrayBuffer[T] =>
+        var i = 0
+        while (i < size) {
+          writeElement(protocol, arrayBuffer(i))
+          i += 1
+        }
       case _: IndexedSeq[_] =>
         var i = 0
-        while (i < list.size) {
+        while (i < size) {
           writeElement(protocol, list(i))
           i += 1
         }
       case _ =>
         list.foreach { element =>
           writeElement(protocol, element)
+        }
+    }
+    protocol.writeListEnd()
+  }
+
+  def writeListDouble(
+    protocol: TProtocol,
+    list: collection.Seq[Double],
+    elementType: Byte,
+    writeElement: ObjDoubleConsumer[TProtocol]
+  ): Unit = {
+    val size = list.size
+    protocol.writeListBegin(new TList(typeForCollection(elementType), size))
+    list match {
+      case wrappedArray: mutable.WrappedArray.ofDouble =>
+        val arr = wrappedArray.array
+        var i = 0
+        while (i < size) {
+          writeElement.accept(protocol, arr(i))
+          i += 1
+        }
+      case arrayBuffer: ArrayBuffer[Double] =>
+        var i = 0
+        while (i < size) {
+          writeElement.accept(protocol, arrayBuffer(i))
+          i += 1
+        }
+      case _: IndexedSeq[_] =>
+        var i = 0
+        while (i < size) {
+          writeElement.accept(protocol, list(i))
+          i += 1
+        }
+      case _ =>
+        list.foreach { element =>
+          writeElement.accept(protocol, element)
+        }
+    }
+    protocol.writeListEnd()
+  }
+
+  def writeListI64(
+    protocol: TProtocol,
+    list: collection.Seq[Long],
+    elementType: Byte,
+    writeElement: ObjLongConsumer[TProtocol]
+  ): Unit = {
+    val len = list.size
+    protocol.writeListBegin(new TList(typeForCollection(elementType), len))
+    list match {
+      case wrappedArray: mutable.WrappedArray.ofLong =>
+        val arr = wrappedArray.array
+        var i = 0
+        while (i < len) {
+          writeElement.accept(protocol, arr(i))
+          i += 1
+        }
+      case arrayBuffer: ArrayBuffer[Long] =>
+        var i = 0
+        while (i < len) {
+          writeElement.accept(protocol, arrayBuffer(i))
+          i += 1
+        }
+      case _: IndexedSeq[_] =>
+        var i = 0
+        while (i < len) {
+          writeElement.accept(protocol, list(i))
+          i += 1
+        }
+      case _ =>
+        list.foreach { element =>
+          writeElement.accept(protocol, element)
         }
     }
     protocol.writeListEnd()
@@ -193,8 +283,14 @@ object TProtocols {
   val writeI64Fn: (TProtocol, Long) => Unit =
     (protocol, value) => protocol.writeI64(value)
 
+  val writeI64Consumer: ObjLongConsumer[TProtocol] =
+    (protocol: TProtocol, value: Long) => protocol.writeI64(value)
+
   val writeDoubleFn: (TProtocol, Double) => Unit =
     (protocol, value) => protocol.writeDouble(value)
+
+  val writeDoubleConsumer: ObjDoubleConsumer[TProtocol] =
+    (protocol: TProtocol, value: Double) => protocol.writeDouble(value)
 
   val writeStringFn: (TProtocol, String) => Unit =
     (protocol, value) => protocol.writeString(value)
