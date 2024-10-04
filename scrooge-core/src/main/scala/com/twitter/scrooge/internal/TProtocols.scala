@@ -3,6 +3,7 @@ package com.twitter.scrooge.internal
 import com.twitter.scrooge.TFieldBlob
 import com.twitter.scrooge.ThriftEnum
 import com.twitter.scrooge.ThriftUnion
+import com.twitter.util.MapUtil
 import java.nio.ByteBuffer
 import java.util.function.ObjDoubleConsumer
 import java.util.function.ObjLongConsumer
@@ -68,18 +69,19 @@ final class TProtocols private[TProtocols] {
     readValue: TProtocol => V
   ): collection.Map[K, V] = {
     val tmap = protocol.readMapBegin()
-    if (tmap.size == 0) {
+    val size = tmap.size
+    if (size == 0) {
       protocol.readMapEnd()
       Map.empty[K, V]
     } else {
-      val map = new mutable.HashMap[K, V]()
+      val map = MapUtil.newHashMap[K, V](size)
       var i = 0
       do {
         val key = readKey(protocol)
         val value = readValue(protocol)
         map(key) = value
         i += 1
-      } while (i < tmap.size)
+      } while (i < size)
       protocol.readMapEnd()
       map
     }
