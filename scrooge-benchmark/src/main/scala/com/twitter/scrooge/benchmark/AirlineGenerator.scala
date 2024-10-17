@@ -36,7 +36,7 @@ object AirlineGenerator {
     Airline(name, Some(headQuarter), Some(owner), Some(airports), Some(routes), Some(flights))
   }
 
-  private[this] def buildAirlines(rng: Random, num: Int): Array[Airline] =
+  def buildAirlines(rng: Random, num: Int): Array[Airline] =
     (0 until num).map { _ => buildAirline(rng) }.toArray
 
   def buildAirlinesAndBytes(seed: Long, num: Int): (Array[Airline], Array[Array[Byte]]) = {

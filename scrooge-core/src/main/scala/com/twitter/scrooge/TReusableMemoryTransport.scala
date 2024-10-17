@@ -1,6 +1,5 @@
 package com.twitter.scrooge
 
-import org.apache.thrift.transport.TTransport
 import org.apache.thrift.TByteArrayOutputStream
 
 object TReusableMemoryTransport {
@@ -15,25 +14,23 @@ object TReusableMemoryTransport {
  * A version of TMemoryTransport that allows for reuse in order to minimize
  * object allocations.
  */
-class TReusableMemoryTransport(baos: TByteArrayOutputStream) extends TTransport {
+class TReusableMemoryTransport(baos: TByteArrayOutputStream) extends TBaseReusableMemoryTransport {
 
   private[this] var readPos = 0
 
   /**
    * Resets both reads and writes.
    */
-  def reset(): Unit = {
+  override def reset(): Unit = {
     baos.reset()
     readPos = 0
   }
 
-  def numWrittenBytes: Int = baos.len()
+  // Here for drop-in api compatibility with TMemoryBuffer
+  override def length(): Int = baos.len()
 
   // Here for drop-in api compatibility with TMemoryBuffer
-  def length(): Int = numWrittenBytes
-
-  // Here for drop-in api compatibility with TMemoryBuffer
-  def getArray(): Array[Byte] = baos.get()
+  override def getArray(): Array[Byte] = baos.get()
 
   /**
    * Total bytes currently allowed in the struct.

@@ -131,74 +131,88 @@ final class TProtocols private[TProtocols] {
 
   def writeListDouble(
     protocol: TProtocol,
-    list: collection.Seq[Double],
-    elementType: Byte,
-    writeElement: ObjDoubleConsumer[TProtocol]
+    list: collection.Seq[Double]
   ): Unit = {
-    val size = list.size
-    protocol.writeListBegin(new TList(typeForCollection(elementType), size))
     list match {
       case wrappedArray: mutable.WrappedArray.ofDouble =>
         val arr = wrappedArray.array
+        val size = arr.length
+        protocol.writeListBegin(new TList(typeForCollection(TType.DOUBLE), size))
         var i = 0
         while (i < size) {
-          writeElement.accept(protocol, arr(i))
+          protocol.writeDouble(arr(i))
           i += 1
         }
+        protocol.writeListEnd()
       case arrayBuffer: ArrayBuffer[Double] =>
+        val size = arrayBuffer.length
+        protocol.writeListBegin(new TList(typeForCollection(TType.DOUBLE), size))
         var i = 0
         while (i < size) {
-          writeElement.accept(protocol, arrayBuffer(i))
+          protocol.writeDouble(arrayBuffer(i))
           i += 1
         }
+        protocol.writeListEnd()
       case _: IndexedSeq[_] =>
+        val size = list.length
+        protocol.writeListBegin(new TList(typeForCollection(TType.DOUBLE), size))
         var i = 0
         while (i < size) {
-          writeElement.accept(protocol, list(i))
+          protocol.writeDouble(list(i))
           i += 1
         }
+        protocol.writeListEnd()
       case _ =>
+        val size = list.length
+        protocol.writeListBegin(new TList(typeForCollection(TType.DOUBLE), size))
         list.foreach { element =>
-          writeElement.accept(protocol, element)
+          protocol.writeDouble(element)
         }
+        protocol.writeListEnd()
     }
-    protocol.writeListEnd()
   }
 
   def writeListI64(
     protocol: TProtocol,
-    list: collection.Seq[Long],
-    elementType: Byte,
-    writeElement: ObjLongConsumer[TProtocol]
+    list: collection.Seq[Long]
   ): Unit = {
-    val len = list.size
-    protocol.writeListBegin(new TList(typeForCollection(elementType), len))
     list match {
       case wrappedArray: mutable.WrappedArray.ofLong =>
         val arr = wrappedArray.array
+        val len = arr.length
+        protocol.writeListBegin(new TList(typeForCollection(TType.I64), len))
         var i = 0
         while (i < len) {
-          writeElement.accept(protocol, arr(i))
+          protocol.writeI64(arr(i))
           i += 1
         }
+        protocol.writeListEnd()
       case arrayBuffer: ArrayBuffer[Long] =>
+        val len = arrayBuffer.length
+        protocol.writeListBegin(new TList(typeForCollection(TType.I64), len))
         var i = 0
         while (i < len) {
-          writeElement.accept(protocol, arrayBuffer(i))
+          protocol.writeI64(arrayBuffer(i))
           i += 1
         }
+        protocol.writeListEnd()
       case _: IndexedSeq[_] =>
+        val len = list.length
+        protocol.writeListBegin(new TList(typeForCollection(TType.I64), len))
         var i = 0
         while (i < len) {
-          writeElement.accept(protocol, list(i))
+          protocol.writeI64(list(i))
           i += 1
         }
+        protocol.writeListEnd()
       case _ =>
+        val len = list.length
+        protocol.writeListBegin(new TList(typeForCollection(TType.I64), len))
         list.foreach { element =>
-          writeElement.accept(protocol, element)
+          protocol.writeI64(element)
         }
+        protocol.writeListEnd()
     }
-    protocol.writeListEnd()
   }
 
   def writeSet[T](
@@ -224,10 +238,9 @@ final class TProtocols private[TProtocols] {
   ): Unit = {
     protocol.writeMapBegin(
       new TMap(typeForCollection(keyType), typeForCollection(valueType), map.size))
-    map.foreach {
-      case (key, value) =>
-        writeKey(protocol, key)
-        writeValue(protocol, value)
+    map.foreach { kv =>
+      writeKey.apply(protocol, kv._1)
+      writeValue.apply(protocol, kv._2)
     }
     protocol.writeMapEnd()
   }

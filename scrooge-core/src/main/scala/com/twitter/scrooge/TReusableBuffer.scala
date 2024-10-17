@@ -23,16 +23,49 @@ package com.twitter.scrooge
  * @param maxThriftBufferSize The buffer will reset if it exceeds max buffer
  *                            size, default is 16K.
  */
-case class TReusableBuffer(initialSize: Int = 512, maxThriftBufferSize: Int = 16 * 1024) {
 
-  private[this] val tlReusableBuffer = new ThreadLocal[TReusableMemoryTransport] {
-    override def initialValue(): TReusableMemoryTransport = TReusableMemoryTransport(initialSize)
+object TReusableBuffer {
+  def apply(
+    initialSize: Int = 512,
+    maxThriftBufferSize: Int = 16 * 1024
+  ): TReusableBuffer = apply(
+    initialSize,
+    maxThriftBufferSize,
+    TReusableMemoryTransport.apply
+  )
+}
+
+case class TReusableBuffer(
+  initialSize: Int,
+  maxThriftBufferSize: Int,
+  ctor: Int => TBaseReusableMemoryTransport) {
+
+  def this(
+    initialSize: Int,
+    maxThriftBufferSize: Int
+  ) = this(
+    initialSize,
+    maxThriftBufferSize,
+    TReusableMemoryTransport.apply
+  )
+
+  private[this] val tlReusableBuffer = new ThreadLocal[TBaseReusableMemoryTransport] {
+    override def initialValue(): TBaseReusableMemoryTransport = ctor.apply(initialSize)
   }
 
   /**
-   * NOTE: This method resets the underlying TReusableMemoryTransport before returning it.
+   * Resets the underlying TReusableMemoryTransport before returning it.
+   * @deprecated This method is kept only for binary backwards compatibility with
+   *             old code outside of source
    */
   def get(): TReusableMemoryTransport = {
+    take().asInstanceOf[TReusableMemoryTransport]
+  }
+
+  /**
+   * Resets the underlying TReusableMemoryTransport before returning it.
+   */
+  def take(): TBaseReusableMemoryTransport = {
     val buf = tlReusableBuffer.get()
     buf.reset()
     buf

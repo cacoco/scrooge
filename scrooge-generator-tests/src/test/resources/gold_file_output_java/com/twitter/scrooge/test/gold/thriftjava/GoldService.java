@@ -28,7 +28,7 @@ import com.twitter.scrooge.ThriftMethodIface;
 import com.twitter.scrooge.ThriftStructIface;
 import com.twitter.scrooge.UtilValidator;
 import com.twitter.scrooge.TReusableBuffer;
-import com.twitter.scrooge.TReusableMemoryTransport;
+import com.twitter.scrooge.TBaseReusableMemoryTransport;
 import com.twitter.scrooge.TFieldBlob;
 import com.twitter.scrooge.internal.TProtocols;
 import com.twitter.scrooge.thrift_validation.BaseValidator;
@@ -306,7 +306,7 @@ public class GoldService {
 
     public Future<Response> doGreatThings(Request request, RequestUnion unionRequest, RequestException exceptionRequest) {
       try {
-        TReusableMemoryTransport __memoryTransport__ = tlReusableBuffer.get();
+        TBaseReusableMemoryTransport __memoryTransport__ = tlReusableBuffer.take();
         TProtocol __prot__ = this.protocolFactory.getProtocol(__memoryTransport__);
         __prot__.writeMessageBegin(new TMessage("doGreatThings", TMessageType.CALL, 0));
         doGreatThings_args __args__ = new doGreatThings_args();
@@ -364,7 +364,7 @@ public class GoldService {
     }
     public Future<Response> noExceptionCall(Request request) {
       try {
-        TReusableMemoryTransport __memoryTransport__ = tlReusableBuffer.get();
+        TBaseReusableMemoryTransport __memoryTransport__ = tlReusableBuffer.take();
         TProtocol __prot__ = this.protocolFactory.getProtocol(__memoryTransport__);
         __prot__.writeMessageBegin(new TMessage("noExceptionCall", TMessageType.CALL, 0));
         noExceptionCall_args __args__ = new noExceptionCall_args();
@@ -787,7 +787,7 @@ public class GoldService {
           TProtocolUtil.skip(iprot, TType.STRUCT);
           iprot.readMessageEnd();
           TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
-          TReusableMemoryTransport memoryBuffer = tlReusableBuffer.get();
+          TBaseReusableMemoryTransport memoryBuffer = tlReusableBuffer.take();
           TProtocol oprot = protocolFactory.getProtocol(memoryBuffer);
           oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
           x.write(oprot);
@@ -807,7 +807,7 @@ public class GoldService {
     private Future<byte[]> reply(String name, Integer seqid, TBase result) {
       try {
         long start = System.nanoTime();
-        TReusableMemoryTransport memoryBuffer = tlReusableBuffer.get();
+        TBaseReusableMemoryTransport memoryBuffer = tlReusableBuffer.take();
         TProtocol oprot = protocolFactory.getProtocol(memoryBuffer);
 
         oprot.writeMessageBegin(new TMessage(name, TMessageType.REPLY, seqid));
@@ -826,7 +826,7 @@ public class GoldService {
     private Future<byte[]> exception(String name, Integer seqid, Integer code, String message) {
       try {
         TApplicationException x = new TApplicationException(code, message);
-        TReusableMemoryTransport memoryBuffer = tlReusableBuffer.get();
+        TBaseReusableMemoryTransport memoryBuffer = tlReusableBuffer.take();
         TProtocol oprot = protocolFactory.getProtocol(memoryBuffer);
 
         oprot.writeMessageBegin(new TMessage(name, TMessageType.EXCEPTION, seqid));

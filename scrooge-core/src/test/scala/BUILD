@@ -1,6 +1,9 @@
 junit_tests(
     sources = ["**/*.scala"],
-    compiler_option_sets = ["fatal_warnings"],
+    compiler_option_sets = [
+        "fatal_warnings",
+        "very-strict-warnings",
+    ],
     platform = "java8",
     tags = ["bazel-compatible"],
     dependencies = [

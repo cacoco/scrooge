@@ -5,7 +5,6 @@ import com.twitter.util.Base64StringEncoder
 import com.twitter.util.StringEncoder
 import java.io.ByteArrayInputStream
 import java.io.InputStream
-import java.util.concurrent.atomic.AtomicLong
 import org.apache.thrift.protocol._
 import org.apache.thrift.transport.TIOStreamTransport
 
@@ -19,15 +18,13 @@ object maxReusableBufferSize
 
 private object ThriftStructSerializer {
 
-  val transportTooBig: AtomicLong = new AtomicLong(0)
-
   private val maxRBS = maxReusableBufferSize()
 
-  val reusableTransport: ThreadLocal[TReusableMemoryTransport] =
-    new ThreadLocal[TReusableMemoryTransport] {
-      override def initialValue(): TReusableMemoryTransport =
-        TReusableMemoryTransport(maxRBS)
-    }
+  private val reusableTransport = TReusableBuffer(
+    initialSize = maxRBS,
+    maxThriftBufferSize = maxRBS,
+    ctor = TByteArrayMemoryTransport.apply
+  )
 }
 
 trait ThriftStructSerializer[T <: ThriftStruct] {
@@ -38,7 +35,7 @@ trait ThriftStructSerializer[T <: ThriftStruct] {
   def encoder: StringEncoder = Base64StringEncoder
 
   def toBytes(obj: T): Array[Byte] = {
-    val trans = reusableTransport.get()
+    val trans = reusableTransport.take()
     try {
       val proto = protocolFactory.getProtocol(trans)
       codec.encode(obj, proto)
@@ -46,12 +43,7 @@ trait ThriftStructSerializer[T <: ThriftStruct] {
       trans.read(bytes, 0, trans.length())
       bytes
     } finally {
-      if (trans.currentCapacity > maxRBS) {
-        transportTooBig.incrementAndGet()
-        reusableTransport.remove()
-      } else {
-        trans.reset()
-      }
+      reusableTransport.reset()
     }
   }
 

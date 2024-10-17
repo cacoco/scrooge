@@ -4,11 +4,11 @@ set -euxo pipefail
 
 # this script is for overwriting gold files when template changed, usage:
 # $source ./scrooge/scrooge-generator-tests/src/test/resources/gen_gold_files.sh
-javaTarget="//scrooge/scrooge-generator-tests/src/test/thrift/goldfile:thrift-java"
-scalaTarget="//scrooge/scrooge-generator-tests/src/test/thrift/goldfile:thrift-scala"
+javaTarget="//scrooge/scrooge-generator-tests/src/test/resources/gold_file_input:thrift-java"
+scalaTarget="//scrooge/scrooge-generator-tests/src/test/resources/gold_file_input:thrift-scala"
 
-scalaJar="bazel-bin/scrooge/scrooge-generator-tests/src/test/thrift/goldfile/thrift--thrift-root_scrooge_scala.srcjar"
-javaJar="bazel-bin/scrooge/scrooge-generator-tests/src/test/thrift/goldfile/thrift--thrift-root_scrooge_java.srcjar"
+scalaJar="bazel-bin/scrooge/scrooge-generator-tests/src/test/resources/gold_file_input/thrift--thrift-root_scrooge_scala.srcjar"
+javaJar="bazel-bin/scrooge/scrooge-generator-tests/src/test/resources/gold_file_input/thrift--thrift-root_scrooge_java.srcjar"
 scalaDest="scrooge/scrooge-generator-tests/src/test/resources/gold_file_output_scala"
 javaDest="scrooge/scrooge-generator-tests/src/test/resources/gold_file_output_java"
 rm -rf $scalaDest $javaDest

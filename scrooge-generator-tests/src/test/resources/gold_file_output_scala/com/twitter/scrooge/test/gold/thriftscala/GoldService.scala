@@ -3,7 +3,7 @@
  *   version: ?
  *   rev: ?
  *   built at: ?
- *   source file: scrooge/scrooge-generator-tests/src/test/resources/gold_file_input/gold.thrift
+ *   source file: gold.thrift
  */
 package com.twitter.scrooge.test.gold.thriftscala
 
@@ -1621,11 +1621,15 @@ object GoldService extends _root_.com.twitter.finagle.thrift.GeneratedThriftServ
     private[this] def stats: StatsReceiver = serverParam.serverStats
     private[this] def perEndpointStats: Boolean = serverParam.perEndpointStats && !stats.isNull
 
-    private[this] val tlReusableBuffer: TReusableBuffer = TReusableBuffer(maxThriftBufferSize = serverParam.maxThriftBufferSize)
+    private[this] val tlReusableBuffer: TReusableBuffer = TReusableBuffer(
+      initialSize = 512,
+      maxThriftBufferSize = serverParam.maxThriftBufferSize,
+      ctor = TByteArrayMemoryTransport.apply(_)
+    )
 
     private[thriftscala] def exception(name: String, seqid: Int, code: Int, message: String): Buf = {
       val x = new TApplicationException(code, message)
-      val memoryBuffer = tlReusableBuffer.get()
+      val memoryBuffer = tlReusableBuffer.take()
       try {
         val oprot = protocolFactory.getProtocol(memoryBuffer)
 
@@ -1642,7 +1646,7 @@ object GoldService extends _root_.com.twitter.finagle.thrift.GeneratedThriftServ
     }
 
     private[this] def reply(name: String, seqid: Int, result: ThriftStruct): Buf = {
-      val memoryBuffer = tlReusableBuffer.get()
+      val memoryBuffer = tlReusableBuffer.take()
       try {
         val oprot = protocolFactory.getProtocol(memoryBuffer)
         val start = System.nanoTime

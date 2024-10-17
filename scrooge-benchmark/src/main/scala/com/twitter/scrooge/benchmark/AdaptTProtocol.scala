@@ -2,14 +2,14 @@ package com.twitter.scrooge.benchmark
 
 import com.twitter.scrooge.BinaryThriftStructSerializer
 import com.twitter.scrooge.adapt.testutil.ReloadOnceAdaptBinarySerializer
-import com.twitter.scrooge.benchmark.AdaptTProtocolBenchmark.AirlineThreadState
+import com.twitter.scrooge.benchmark.AdaptTProtocol.AirlineThreadState
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 import thrift.benchmark._
 import com.twitter.scrooge.ThriftStructSerializer
 
-object AdaptTProtocolBenchmark {
+object AdaptTProtocol {
   // Pass in a seed and fixed number of airlines.
   // Will be initialized with this object so separate from the benchmarks.
   val (airlines: Array[Airline], airlinesBytes) =
@@ -37,8 +37,8 @@ object AdaptTProtocolBenchmark {
 
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @BenchmarkMode(Array(Mode.Throughput))
-class AdaptTProtocolBenchmark {
-  import AdaptTProtocolBenchmark._
+class AdaptTProtocol {
+  import AdaptTProtocol._
 
   // todo: Add benchmarks for toBytes, all fields accessed, more fields accessed etc.
 

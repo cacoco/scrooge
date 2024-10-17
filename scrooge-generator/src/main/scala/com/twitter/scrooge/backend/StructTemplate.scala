@@ -245,9 +245,9 @@ trait StructTemplate { self: TemplateGenerator =>
     elementFieldType match {
       case at: AnnotatedFieldType => genWriteListFn(at.unwrap, fieldName, protoName)
       case TDouble =>
-        v(s"$rootProtos.writeListDouble($protoName, $fieldName, TType.DOUBLE, _root_.com.twitter.scrooge.internal.TProtocols.writeDoubleConsumer)")
+        v(s"$rootProtos.writeListDouble($protoName, $fieldName)")
       case TI64 =>
-        v(s"$rootProtos.writeListI64($protoName, $fieldName, TType.I64, _root_.com.twitter.scrooge.internal.TProtocols.writeI64Consumer)")
+        v(s"$rootProtos.writeListI64($protoName, $fieldName)")
       case _ =>
         val elemFieldType = s"TType.${genConstType(elementFieldType)}"
         val writeElementFn = genWriteValueFn2(elementFieldType)
