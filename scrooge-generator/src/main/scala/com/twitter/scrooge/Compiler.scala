@@ -28,6 +28,8 @@ import com.twitter.scrooge.java_generator.ApacheJavaGenerator
 
 import java.io.File
 import java.io.FileWriter
+import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
 import scala.collection.concurrent.TrieMap
 
 object CompilerDefaults {
@@ -37,6 +39,8 @@ object CompilerDefaults {
 
 class Compiler(val config: ScroogeConfig) {
   var fileMapWriter: scala.Option[FileWriter] = None
+  // Optionally, format the timestamp if needed
+  val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
   def run(): Unit = {
     // if --gen-file-map is specified, prepare the map file.
@@ -74,7 +78,10 @@ class Compiler(val config: ScroogeConfig) {
         )
         val doc = parser.parseFile(inputFile).mapNamespaces(config.namespaceMappings)
 
-        if (config.verbose) println("+ Compiling %s".format(inputFile))
+        if (config.verbose) {
+          val currentDateTime: LocalDateTime = LocalDateTime.now()
+          println("+ %s Compiling %s".format(currentDateTime.format(formatter), inputFile))
+        }
         val resolvedDoc = TypeResolver()(doc, Some(inputFile))
         val generator =
           GeneratorFactory(
@@ -98,7 +105,10 @@ class Compiler(val config: ScroogeConfig) {
           _.getPath
         }
         if (config.verbose) {
-          println("+ Generated %s".format(generatedFiles.mkString(", ")))
+          val currentDateTime: LocalDateTime = LocalDateTime.now()
+          println(
+            "+ %s Generated %s"
+              .format(currentDateTime.format(formatter), generatedFiles.mkString(", ")))
         }
         fileMapWriter.foreach { w =>
           generatedFiles.foreach { path => w.write(inputFile + " -> " + path + "\n") }
